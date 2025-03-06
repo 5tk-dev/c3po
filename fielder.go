@@ -484,30 +484,38 @@ func (f *Fielder) New() reflect.Value {
 	return v
 }
 
+var _skipTag = map[string]any{
+	"realName": nil,
+	"strType":  nil,
+}
+
 func (f *Fielder) ToMap() map[string]any {
-	fildMap := map[string]any{}
-	if n, ok := f.Tags["name"]; ok {
-		fildMap["name"] = n
-	} else {
-		fildMap["name"] = f.Name
+	fieldMap := map[string]any{}
+	for t, v := range f.Tags {
+		if _, ok := _skipTag[t]; ok {
+			continue
+		}
+		fieldMap[t] = v
 	}
-	if in, ok := f.Tags["in"]; ok {
-		fildMap["in"] = in
+
+	st := f.Tags["strType"]
+	if st == "" {
+		st = f.Type.String()
 	}
-	if st, ok := f.Tags["strType"]; ok {
-		fildMap["type"] = st
-	} else {
-		fildMap["type"] = f.Type.String()
+
+	if st != "struct" {
+		fieldMap["type"] = st
 	}
 
 	if len(f.Children) > 0 {
-		childsMap := map[string]any{}
 		for cn, cv := range f.Children {
-			childsMap[cn] = cv.ToMap()
+			fieldMap[cn] = cv.ToMap()
 		}
-		fildMap["schema"] = childsMap
+	} else if f.IsSlice {
+		fieldMap["fields"] = f.SliceType.ToMap()
 	}
-	return fildMap
+
+	return fieldMap
 }
 
 func (f *Fielder) String() string {
