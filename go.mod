@@ -1,3 +1,3 @@
-module github.com/ethoDomingues/c3po
+module github.com/5tkgarage/c3po
 
-go 1.20
+go 1.23.3

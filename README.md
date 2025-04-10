@@ -1,120 +1,97 @@
+
 # c3po
 
-## A GoLang data validator
+**c3po** é uma biblioteca de validação de structs em Go inspirada no Pydantic, com foco em performance, flexibilidade e facilidade de uso. Ideal para validações robustas em APIs web, sistemas embarcados e mais.
 
-```go
-	ParseSchema(struct{}) => struct{}
-	ParseSchema(&struct{}) => *struct{}
-	ParseSchema(&struct{Field:Value}) => *struct{Field: value} // with default value
+---
 
-	type Schema struct{
-		Field `c3po:"-"` // omit this field
-		Field `c3po:"realName"` // string: real name field
-		Field `c3po:"name"` 	// string: name of validation	(default realName)
-		Field `c3po:"escape"`	// bool: escape html value		(default false)
-		Field `c3po:"required"` // bool:		...			 	(default false)
-		Field `c3po:"nullable"` // bool:if true,allow nil value (default false)
-		Field `c3po:"recursive"`// bool: deep validation	  	(default true)
-		Field `c3po:"skiponerr"`// bool: omit on valid. error 	(default false)
-	}
+## Instalação
+
+```bash
+go get github.com/5tkgarage/c3po
 ```
 
-## Basic Usage
+---
+
+## Exemplo Básico
 
 ```go
-package main
-
-import (
- "encoding/json"
- "fmt"
-
- "github.com/ethoDomingues/c3po"
-)
-
-type Model struct {
- UUID string
-}
 type User struct {
- Model `c3po:"heritage"`
- Name  string `c3po:"name=username"`
- Email string `c3po:"required"`
+    Name string `c3po:"required"`
+    Age  int    `c3po:"min=18"`
 }
 
-type Studant struct {
- User
- Curse *Curse `c3po:"recursive=false"`
-}
+data := &User{Name: "Luke", Age: 17}
+schema := c3po.ParseSchema(data)
+res := schema.Decode(data)
 
-type Curse struct {
- Name     string
- Duration string
-}
-
-func main() {
- var userData = map[string]any{
-  "uuid":  "aaaa-aaaa-aaaa", // here 'uuid' is inheritance from 'model'
-  "email": "tião@localhost",
- }
-
- var studantData = map[string]any{
-  "user": userData,
-  "curse": &Curse{
-   Name:     "mechanic",
-   Duration: "infinity",
-  },
- }
-
- u := &User{Name: "tião"} // here the 'name' field has a default value
- userSchema := c3po.ParseSchema(u)
- u2, _ := userSchema.Decode(userData)
- fmt.Println(c3po.EncodeToString(u))
- fmt.Println(c3po.EncodeToString(u2))
-
- s := &Studant{}
- studantSchema := c3po.ParseSchema(s)
- s2, _ := studantSchema.Decode(studantData)
- fmt.Println(c3po.EncodeToString(s))
- fmt.Println(c3po.EncodeToString(s2))
-}
-
-```
-
-Output:
-
-```sh
-$ go run .
-{
- "UUID": "",
- "Name": "tião",
- "Email": ""
-}
-{
- "UUID": "aaaa-aaaa-aaaa",
- "Name": "tião",
- "Email": "tião@localhost"
-}
-{
- "UUID": "",
- "Name": "",
- "Email": "",
- "Curse": null
-}
-{
- "UUID": "aaaa-aaaa-aaaa",
- "Name": "",
- "Email": "tião@localhost",
- "Curse": {
-  "Name": "mechanic",
-  "Duration": "infinit"
+if res.HasError() {
+    fmt.Println(res.Errors())
 }
 ```
-## Others Functions
+
+---
+
+## Tags Suportadas
+
+| Tag        | Descrição                                  |
+|------------|--------------------------------------------|
+| `required` | Campo obrigatório                          |
+| `min`      | Valor mínimo (para números, strings, etc.) |
+| `max`      | Valor máximo                               |
+| `in`       | Lista de valores aceitos                   |
+
+---
+
+## Tags Personalizadas
+
+Você pode definir suas próprias tags com:
 
 ```go
-	c3po.Encode(struct{Name:"Jão", Age:99}) => map[string]any{"Name":"jão", "Age":99}
-	c3po.Encode([]struct{Name:"Jão", Age:99}) => []map[string]any{"Name":"jão", "Age":99}
-
-  
-	c3po.EncodeToJSON(struct{Name:"Jão", Age:99}) => []byte{"{'Name':'jão', 'Age':99}"}
-	c3po.EncodeToString(struct{Name:"Jão", Age:99}) => "{'Name':'jão', 'Age':99}"
+c3po.ParseSchemaWithTag("chat", struct)
 ```
+
+Isso permite utilizar a lib com frameworks como Fiber, Gin, Echo e outros, mantendo liberdade total nas tags de validação.
+
+---
+
+## Retorno de Erros
+
+`Decode()` retorna um struct com:
+
+- `ValidData()`: dados validados (com defaults aplicados)
+- `Errors()`: mapa com os erros de validação encontrados
+
+---
+
+## Exemplo com Valor Padrão
+
+```go
+type Food struct {
+    Name string `c3po:"required=false"`
+}
+
+schema := c3po.ParseSchema(&Food{Name: "fries"})
+res := schema.Decode(map[string]any{}) // Name será "fries"
+```
+
+---
+
+## Ideias Futuras
+
+- Suporte a `enum` e validações encadeadas
+- Validações condicionais entre campos
+- Integração com serialização JSON nativa
+- Geração automática de documentação a partir dos schemas
+
+---
+
+## Contribuição
+
+Contribuições são bem-vindas! Abra uma issue, envie um PR ou mande uma ideia maluca — a casa é sua.
+
+---
+
+## Licença
+
+MIT — use, modifique, compartilhe.

@@ -8,6 +8,11 @@ import (
 	"strings"
 )
 
+func init() {
+	once.Do(initRules)
+	once.Do(initRegistry)
+}
+
 // return a []map, map or a simple value. Depende doq vc passou como argumento
 func encode(v any) (any, error) {
 	if v == nil {
