@@ -1,7 +1,6 @@
 package test
 
 import (
-	"fmt"
 	"reflect"
 	"strings"
 	"testing"
@@ -64,7 +63,6 @@ func TestRuleCpf(t *testing.T) {
 			t.Errorf("SetRuleCpfStruct got %v, want %v", v.Cpf, "00000000000")
 
 		}
-		fmt.Println(v.Cpf)
 	}
 	if v, ok := sch1.Value().(*SetRuleCpfStruct); ok {
 		if v.Cpf != "11111111111" {
