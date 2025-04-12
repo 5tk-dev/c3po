@@ -1,10 +1,7 @@
 package test
 
 import (
-	"fmt"
-	"reflect"
 	"testing"
-	"time"
 
 	"github.com/5tkgarage/c3po"
 )
@@ -132,31 +129,27 @@ func TestStructTag_recurcive(t *testing.T) {
 	}
 }
 
-type BStructValue struct {
-	Age   int
-	Name  string
-	Float float32
-	Now   time.Time `validate:"skip"`
+type TagMinMax struct {
+	Num int `validate:"min=1,max=2"`
 }
 
-func BenchmarkStruct(b *testing.B) {
-	c3po.SetRule("now", &c3po.Rule{
-		Validate: func(rv reflect.Value, rule string) bool {
-			v := reflect.ValueOf(time.Now())
-			rv.Set(v)
-			return true
-		}})
+func TestTagStructTag_minMax(t *testing.T) {
+	s := &TagMinMax{}
+	sch0 := c3po.Validate(s, map[string]string{})
+	sch1 := c3po.Validate(s, map[string]string{"num": "1"})
+	sch2 := c3po.Validate(s, map[string]string{"num": "2"})
+	sch3 := c3po.Validate(s, map[string]string{"num": "3"})
 
-	bs := &BStructValue{}
-	sch := c3po.Validate(bs, map[string]any{
-		"age":   21,
-		"name":  "foo",
-		"float": "12.1",
-		"now":   time.Now(),
-	})
-	if sch.HasErrors() {
-		b.Error(sch.Errors())
+	if !sch0.HasErrors() {
+		t.Errorf("TagMinMax.Field: got %v, want min error", sch0.Value().(*TagMinMax).Num)
 	}
-	s, ok := sch.Value().(*BStructValue)
-	fmt.Println(s, ok)
+	if sch1.HasErrors() {
+		t.Error(sch1.Errors())
+	}
+	if sch2.HasErrors() {
+		t.Error(sch2.Errors())
+	}
+	if !sch3.HasErrors() {
+		t.Errorf("TagMinMax.Field: got %v, want min error", sch1.Value().(*TagMinMax).Num)
+	}
 }

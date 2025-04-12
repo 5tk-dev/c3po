@@ -10,6 +10,7 @@ import (
 */
 
 var minKindFunc = map[reflect.Kind]func(reflect.Value, string) bool{
+	reflect.String:  minInt,
 	reflect.Int:     minInt,
 	reflect.Int8:    minInt8,
 	reflect.Int16:   minInt16,
@@ -20,39 +21,98 @@ var minKindFunc = map[reflect.Kind]func(reflect.Value, string) bool{
 }
 
 func minInt(sch reflect.Value, m string) bool {
+	var v int
+
+	to := reflect.TypeOf(v)
+	if sch.CanConvert(to) {
+		sch2 := sch.Convert(to)
+		v = sch2.Interface().(int)
+	}
+
 	min, _ := strconv.Atoi(m)
-	return sch.Interface().(int) < min
+
+	return v >= min
 }
 
 func minInt8(sch reflect.Value, m string) bool {
+	var v int8
+
+	to := reflect.TypeOf(v)
+	if sch.CanConvert(to) {
+		sch2 := sch.Convert(to)
+		v = sch2.Interface().(int8)
+	}
+
 	min, _ := strconv.Atoi(m)
-	return sch.Interface().(int8) < int8(min)
+	return v >= int8(min)
 }
 
 func minInt16(sch reflect.Value, m string) bool {
+	var v int16
+
+	to := reflect.TypeOf(v)
+	if sch.CanConvert(to) {
+		sch2 := sch.Convert(to)
+		v = sch2.Interface().(int16)
+	}
 	min, _ := strconv.Atoi(m)
-	return sch.Interface().(int16) < int16(min)
+	return v >= int16(min)
 }
+
 func minInt32(sch reflect.Value, m string) bool {
+	var v int32
+
+	to := reflect.TypeOf(v)
+	if sch.CanConvert(to) {
+		sch2 := sch.Convert(to)
+		v = sch2.Interface().(int32)
+	}
+
 	min, _ := strconv.Atoi(m)
-	return sch.Interface().(int32) < int32(min)
+	return v >= int32(min)
 }
+
 func minInt64(sch reflect.Value, m string) bool {
+	var v int64
+
+	to := reflect.TypeOf(v)
+	if sch.CanConvert(to) {
+		sch2 := sch.Convert(to)
+		v = sch2.Interface().(int64)
+	}
+
 	min, _ := strconv.Atoi(m)
-	return sch.Interface().(int64) < int64(min)
+	return v >= int64(min)
 }
 
 func minFloat32(sch reflect.Value, m string) bool {
+	var v float32
+
+	to := reflect.TypeOf(v)
+	if sch.CanConvert(to) {
+		sch2 := sch.Convert(to)
+		v = sch2.Interface().(float32)
+	}
+
 	min, _ := strconv.ParseFloat(m, 32)
-	return sch.Interface().(float32) < float32(min)
+	return v >= float32(min)
 }
+
 func minFloat64(sch reflect.Value, m string) bool {
+	var v float64
+
+	to := reflect.TypeOf(v)
+	if sch.CanConvert(to) {
+		sch2 := sch.Convert(to)
+		v = sch2.Interface().(float64)
+	}
+
 	min, _ := strconv.ParseFloat(m, 64)
-	return sch.Interface().(float64) < float64(min)
+	return v >= float64(min)
 }
 
 func min(rv reflect.Value, ruleValue string) bool {
-	return !minKindFunc[rv.Kind()](rv, ruleValue)
+	return minKindFunc[rv.Kind()](rv, ruleValue)
 }
 
 /*
@@ -60,6 +120,7 @@ func min(rv reflect.Value, ruleValue string) bool {
 */
 
 var maxKindFunc = map[reflect.Kind]func(reflect.Value, string) bool{
+	reflect.String:  maxInt,
 	reflect.Int:     maxInt,
 	reflect.Int8:    maxInt8,
 	reflect.Int16:   maxInt16,
@@ -70,39 +131,98 @@ var maxKindFunc = map[reflect.Kind]func(reflect.Value, string) bool{
 }
 
 func maxInt(sch reflect.Value, m string) bool {
+	var v int
+
+	to := reflect.TypeOf(v)
+	if sch.CanConvert(to) {
+		sch2 := sch.Convert(to)
+		v = sch2.Interface().(int)
+	}
+
 	min, _ := strconv.Atoi(m)
-	return sch.Interface().(int) > min
+	return v <= int(min)
 }
 
 func maxInt8(sch reflect.Value, m string) bool {
+	var v int8
+
+	to := reflect.TypeOf(v)
+	if sch.CanConvert(to) {
+		sch2 := sch.Convert(to)
+		v = sch2.Interface().(int8)
+	}
+
 	min, _ := strconv.Atoi(m)
-	return sch.Interface().(int8) > int8(min)
+	return v <= int8(min)
 }
 
 func maxInt16(sch reflect.Value, m string) bool {
+	var v int16
+
+	to := reflect.TypeOf(v)
+	if sch.CanConvert(to) {
+		sch2 := sch.Convert(to)
+		v = sch2.Interface().(int16)
+	}
+
 	min, _ := strconv.Atoi(m)
-	return sch.Interface().(int16) > int16(min)
+	return v <= int16(min)
 }
+
 func maxInt32(sch reflect.Value, m string) bool {
+	var v int32
+
+	to := reflect.TypeOf(v)
+	if sch.CanConvert(to) {
+		sch2 := sch.Convert(to)
+		v = sch2.Interface().(int32)
+	}
+
 	min, _ := strconv.Atoi(m)
-	return sch.Interface().(int32) > int32(min)
+	return v <= int32(min)
 }
+
 func maxInt64(sch reflect.Value, m string) bool {
+	var v int64
+
+	to := reflect.TypeOf(v)
+	if sch.CanConvert(to) {
+		sch2 := sch.Convert(to)
+		v = sch2.Interface().(int64)
+	}
+
 	min, _ := strconv.Atoi(m)
-	return sch.Interface().(int64) > int64(min)
+	return v <= int64(min)
 }
 
 func maxFloat32(sch reflect.Value, m string) bool {
+	var v float32
+
+	to := reflect.TypeOf(v)
+	if sch.CanConvert(to) {
+		sch2 := sch.Convert(to)
+		v = sch2.Interface().(float32)
+	}
+
 	min, _ := strconv.ParseFloat(m, 32)
-	return sch.Interface().(float32) > float32(min)
+	return v <= float32(min)
 }
+
 func maxFloat64(sch reflect.Value, m string) bool {
+	var v float64
+
+	to := reflect.TypeOf(v)
+	if sch.CanConvert(to) {
+		sch2 := sch.Convert(to)
+		v = sch2.Interface().(float64)
+	}
+
 	min, _ := strconv.ParseFloat(m, 64)
-	return sch.Interface().(float64) > float64(min)
+	return v <= float64(min)
 }
 
 func max(rv reflect.Value, ruleValue string) bool {
-	return !maxKindFunc[rv.Kind()](rv, ruleValue)
+	return maxKindFunc[rv.Kind()](rv, ruleValue)
 }
 
 /*

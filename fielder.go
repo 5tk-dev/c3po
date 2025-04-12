@@ -61,9 +61,17 @@ func (f *Fielder) parseRules() {
 	if f.Rules == nil {
 		f.Rules = map[string]*Rule{}
 	}
-	for rn := range f.Tags {
+	for rn, v := range f.Tags {
 		if r := GetRule(rn); r != nil {
-			f.Rules[rn] = r
+			nr := &Rule{
+				Name:     r.Name,
+				Message:  r.Message,
+				Validate: r.Validate,
+			}
+			if r.Value == "" {
+				nr.Value = v
+			}
+			f.Rules[rn] = nr
 		}
 	}
 }
@@ -173,6 +181,12 @@ func (f *Fielder) decodeMap(rv reflect.Value) (sch reflect.Value, err any) {
 		if _err != nil {
 			err = _err
 			return
+		}
+		if f.MapValueType.IsPointer {
+			mval = mval.Addr()
+		}
+		if f.MapKeyType.IsPointer {
+			mkey = mkey.Addr()
 		}
 		m.SetMapIndex(mkey, mval)
 	}

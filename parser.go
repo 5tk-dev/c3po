@@ -179,6 +179,11 @@ func (f *Fielder) parseHeaders(tags map[string]string) {
 	v, ok = tags["required"] // default false
 	f.Required = ok && (strings.ToLower(v) == "true")
 
+	_, ok = tags["min"] // default false
+	if ok {
+		f.Required = ok
+	}
+
 	v, ok = tags["nullable"] // default true
 	if ok {
 		if strings.ToLower(v) == "false" {
