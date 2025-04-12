@@ -9,8 +9,7 @@ import (
 )
 
 func init() {
-	once.Do(initRules)
-	once.Do(initRegistry)
+	initRegistry()
 }
 
 // return a []map, map or a simple value. Depende doq vc passou como argumento

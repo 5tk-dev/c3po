@@ -31,17 +31,18 @@ type Fielder struct {
 	MapKeyType,
 	MapValueType *Fielder
 
-	Walk      bool // default: true -> deep validation
-	Recurcive bool // default: false -> for embed struct
+	SkipValidate bool // default: false
+	Walk         bool // default: true -> deep validation
+	Recurcive    bool // default: false -> for embed struct
 
 	Children      map[string]*Fielder //
 	FieldsByIndex map[int]string      //
 	SuperIndex    *int                // if a field to a struct
 
-	Escape    bool // default: false
-	Required  bool // default: false
-	Nullable  bool // default: false
-	NonZero   bool // default: false -> only Integers
+	Required bool // default: false
+
+	Nullable bool // default: true
+
 	SkipError bool // default: false
 	OmitEmpty bool // default: false
 }
@@ -56,19 +57,18 @@ func (f *Fielder) checkSchPtr(r reflect.Value) any {
 	return r.Interface()
 }
 
-func (f *Fielder) parseRules() { f.Rules = makeFielderRules(f.Tags) }
-
-func (f *Fielder) decodePrimitive(rv reflect.Value) (sch reflect.Value, err any) {
-	if f.Type == reflect.Interface {
-		sch = rv
-	} else {
-		sch = GetReflectElem(f.New())
-		if !SetReflectValue(sch, rv, f.Escape) {
-			if !f.SkipError {
-				return reflect.Value{}, RetInvalidType(f)
-			}
+func (f *Fielder) parseRules() {
+	if f.Rules == nil {
+		f.Rules = map[string]*Rule{}
+	}
+	for rn := range f.Tags {
+		if r := GetRule(rn); r != nil {
+			f.Rules[rn] = r
 		}
 	}
+}
+
+func (f *Fielder) execRules(sch reflect.Value) (reflect.Value, any) {
 	for _, r := range f.Rules {
 		if !r.Validate(sch, r.Value) {
 			err := ValidationError{
@@ -78,7 +78,21 @@ func (f *Fielder) decodePrimitive(rv reflect.Value) (sch reflect.Value, err any)
 			return reflect.Value{}, err
 		}
 	}
-	return
+	return sch, nil
+}
+
+func (f *Fielder) decodePrimitive(rv reflect.Value) (sch reflect.Value, err any) {
+	if f.Type == reflect.Interface {
+		sch = rv
+	} else {
+		sch = GetReflectElem(f.New())
+		if !SetReflectValue(sch, rv) {
+			if !f.SkipError {
+				return reflect.Value{}, RetInvalidType(f)
+			}
+		}
+	}
+	return sch, nil
 }
 
 func (f *Fielder) decodeSlice(rv reflect.Value) (sch reflect.Value, err any) {
@@ -123,6 +137,7 @@ func (f *Fielder) decodeSlice(rv reflect.Value) (sch reflect.Value, err any) {
 		}
 		sIndex.Set(slicSch)
 	}
+
 	if sch.Len() == 0 {
 		if f.Required {
 			errs = append(errs, RetMissing(f))
@@ -167,7 +182,6 @@ func (f *Fielder) decodeMap(rv reflect.Value) (sch reflect.Value, err any) {
 
 func (f *Fielder) decodeStruct(v any) (sch reflect.Value, err any) {
 	errs := []any{}
-
 	data, ok := v.(map[string]any)
 	if !ok {
 		_data, _err := Encode(v)
@@ -184,7 +198,6 @@ func (f *Fielder) decodeStruct(v any) (sch reflect.Value, err any) {
 			return
 		}
 	}
-
 	sch = f.New().Elem()
 
 	for i := range sch.NumField() {
@@ -199,35 +212,37 @@ func (f *Fielder) decodeStruct(v any) (sch reflect.Value, err any) {
 		if !ok {
 			continue
 		}
+
 		if fielder.Recurcive {
 			value = data
 		} else {
 			if value, ok = data[fielder.Name]; !ok {
-				value, ok = data[fielder.RealName]
-				if !ok {
-					if fielder.Default == nil {
-						if fielder.Required {
-							errs = append(errs, map[string]any{fielder.Name: RetMissing(fielder)})
-						}
-						continue
-					}
+				if fielder.Default != nil {
 					value = fielder.Default
 				}
 			}
 			if value == nil && !fielder.Nullable {
-				if fielder.Default == nil {
-					if fielder.Required {
-						errs = append(errs, map[string]any{fielder.Name: RetMissing(fielder)})
-					}
-					continue
+				if fielder.Required {
+					errs = append(errs, ValidationError{
+						Rule: &Rule{
+							Name:    "required",
+							Message: "{field} is required",
+						},
+						Field: fielder.Name,
+					})
 				}
-				value = fielder.Default
+				fielder.execRules(schF)
+				continue
 			}
 		}
 
 		var rvF reflect.Value
 
-		if fielder.Walk {
+		if fielder.SkipValidate {
+			SetReflectValue(schF,
+				reflectOf(value))
+			continue
+		} else if fielder.Walk {
 			_rvF, e := fielder.decodeSchema(value)
 			if e != nil {
 				errs = append(errs, e)
@@ -238,13 +253,20 @@ func (f *Fielder) decodeStruct(v any) (sch reflect.Value, err any) {
 			rvF = reflect.ValueOf(value)
 		}
 
-		if !SetReflectValue(schF, rvF, false) {
+		if rvF.Kind() == reflect.Invalid {
+			if fielder.Nullable {
+				continue
+			} else if !fielder.SkipError {
+				errs = append(errs, map[string]any{fielder.Name: RetInvalidType(fielder)})
+			}
+		} else if !SetReflectValue(schF, rvF) {
 			if !fielder.SkipError {
 				errs = append(errs, map[string]any{fielder.Name: RetInvalidType(fielder)})
 			}
 			continue
 		}
 	}
+
 	if len(errs) == 1 {
 		err = errs[0]
 	} else if len(errs) > 0 {
@@ -275,29 +297,37 @@ func (f *Fielder) decodeSchema(v any) (reflect.Value, any) {
 				}
 			}
 		} else {
-			return f.New(), nil
+			return f.execRules(reflectOf(nil))
 		}
 	}
 
 	var rfVal = reflectOf(v)
-	if rfVal.CanInt() || rfVal.CanFloat() && rfVal.Interface() == 0 {
-		if f.NonZero {
-			if f.Default.(int) == 0 {
-				return reflect.Value{}, RetInvalidValue(f)
-			}
-			v = f.Default
-			rfVal = reflectOf(v)
-		}
-	}
+
 	switch f.Type {
 	default:
-		return f.decodePrimitive(rfVal)
+		r, err := f.decodePrimitive(rfVal)
+		if err != nil {
+			return r, err
+		}
+		return f.execRules(r)
 	case reflect.Map:
-		return f.decodeMap(rfVal)
+		r, err := f.decodeMap(rfVal)
+		if err != nil {
+			return r, err
+		}
+		return f.execRules(r)
 	case reflect.Array, reflect.Slice:
-		return f.decodeSlice(rfVal)
+		r, err := f.decodeSlice(rfVal)
+		if err != nil {
+			return r, err
+		}
+		return f.execRules(r)
 	case reflect.Struct:
-		return f.decodeStruct(v)
+		r, err := f.decodeStruct(v)
+		if err != nil {
+			return r, err
+		}
+		return f.execRules(r)
 	}
 }
 

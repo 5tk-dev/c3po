@@ -109,6 +109,48 @@ func max(rv reflect.Value, ruleValue string) bool {
 	REQUIRED
 */
 
-func req(rv reflect.Value, ruleValue string) bool {
-	return !rv.IsZero()
+func req(rv reflect.Value, ruleValue string) bool { return !rv.IsZero() }
+
+/*
+	MINLEN
+*/
+
+func canLen(rv reflect.Value) bool {
+	switch rv.Kind() {
+	default:
+		return false
+	case reflect.Array, reflect.Slice, reflect.String, reflect.Map, reflect.Chan:
+		return true
+	}
+}
+
+func minLen(rv reflect.Value, ruleValue string) bool {
+	if canLen(rv) {
+		l, _ := strconv.Atoi(ruleValue)
+		if rv.Len() >= l {
+			return true
+		}
+	}
+	return false
+}
+
+func maxLen(rv reflect.Value, ruleValue string) bool {
+	if canLen(rv) {
+		l, _ := strconv.Atoi(ruleValue)
+		if rv.Len() <= l {
+			return true
+		}
+	}
+	return false
+}
+
+/*
+	ESCAPE
+*/
+
+func escape(rv reflect.Value, _ string) bool {
+	if str, ok := rv.Interface().(string); ok {
+		rv.Set(reflectOf(HtmlEscape(str)))
+	}
+	return true
 }

@@ -14,13 +14,19 @@ usage:
 	c3po.ParseSchema(&struct{Field:Value}) => *struct{Field: value} // with default value
 
 	type Schema struct{
-		Field `c3po:"-"`			// omit this field
-		Field `c3po:"name"`			// string: name of validation		(default realName)
-		Field `c3po:"escape"`		// bool: escape html value			(default false)
-		Field `c3po:"required"`		// bool:		...			 		(default false)
-		Field `c3po:"nullable"`		// bool: if true, allow nil value	(default false)
-		Field `c3po:"deep"`			// bool: deep validation			(default true)
-		Field `c3po:"skiponerr"`	// bool: omit on valid. error		(default false)
+		Field `c3po:"-"`				// omit this field
+		Field `c3po:"name"`				// string: name of validation		(default realName)
+		Field `c3po:"walk"`				// bool: deep validation			(default true)
+		Field `c3po:"escape"`			// bool: escape html value			(default false)
+		Field `c3po:"required"`			// bool:		...			 		(default false)
+		Field `c3po:"nullable"`			// bool: if true, allow nil value	(default true)
+		Field `c3po:"recursive"`		// bool: for embbed data 			(default false)
+		Field `c3po:"skiperr"`			// bool: omit on error				(default false)
+		Field `c3po:"skip"`				// bool: set value without validate	(default false)
+		Field `c3po:"min=18"`			// numbers only (int8, 16..., float32, ...)
+		Field `c3po:"max=65"`			// numbers only (int8, 16..., float32, ...)
+		Field `c3po:"minlength=1"`		// if a value can len, is valid. else skip
+		Field `c3po:"maxlength=100"`	// if a value can len, is valid. else skip
 	}
 */
 func ParseSchema(schema any) *Fielder {
@@ -44,6 +50,7 @@ func parseSchema(schema any, tagKey string, tags map[string]string) *Fielder {
 	rv := reflect.ValueOf(schema)
 	f := &Fielder{}
 	f.parseHeaders(tags)
+	f.parseRules()
 
 	if schema != nil {
 		if rv.Kind() == reflect.Ptr {
@@ -152,7 +159,6 @@ func parseSchema(schema any, tagKey string, tags map[string]string) *Fielder {
 
 func (f *Fielder) parseHeaders(tags map[string]string) {
 	f.Tags = tags
-	f.parseRules()
 
 	if v, ok := tags["name"]; ok && v != "" {
 		f.Name = v
@@ -164,21 +170,28 @@ func (f *Fielder) parseHeaders(tags map[string]string) {
 		f.Recurcive = r != "false"
 	}
 
-	v, ok := tags["escape"] // default false
-	f.Escape = (ok && (strings.ToLower(v) == "true"))
+	v, ok := tags["walk"] // default true
+	f.Walk = !ok || strings.ToLower(v) != "false"
+
+	v, ok = tags["skip"] // default false
+	f.SkipValidate = ok && (strings.ToLower(v) != "false")
 
 	v, ok = tags["required"] // default false
 	f.Required = ok && (strings.ToLower(v) == "true")
 
-	v, ok = tags["walk"] // default true
-	f.Walk = !ok || strings.ToLower(v) != "false"
-
 	v, ok = tags["nullable"] // default true
-	f.Nullable = ok && strings.ToLower(v) == "true" && !f.Required
+	if ok {
+		if strings.ToLower(v) == "false" {
+			f.Required = true
+		} else {
+			f.Nullable = true
+		}
+	}
 
-	v, ok = tags["nonzero"] // default false
-	f.NonZero = ok && (strings.ToLower(v) == "true")
+	if f.Nullable && f.Required {
+		f.Nullable = false
+	}
 
-	v, ok = tags["skiperror"] // skip field on err - default false
+	v, ok = tags["skiperr"] // skip field on err - default false
 	f.SkipError = ok && (strings.ToLower(v) == "true") && !f.Required
 }

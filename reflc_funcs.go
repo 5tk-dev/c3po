@@ -37,12 +37,11 @@ func GetReflectElem(r reflect.Value) reflect.Value {
 	return r
 }
 
-func convert(v *reflect.Value, t reflect.Type, stringEscape bool) bool {
+func convert(v *reflect.Value, t reflect.Type) bool {
 	defer try()
 	if v.Kind() == t.Kind() {
 		return true
 	}
-
 	switch t.Kind() {
 	case reflect.Float32, reflect.Float64:
 		switch v.Kind() {
@@ -53,8 +52,8 @@ func convert(v *reflect.Value, t reflect.Type, stringEscape bool) bool {
 			}
 			*v = reflect.ValueOf(i).Convert(t)
 		case
-			reflect.Uint, reflect.Uint64, reflect.Uint32, reflect.Uint16,
-			reflect.Int, reflect.Int64, reflect.Int32, reflect.Int16:
+			reflect.Uint, reflect.Uint64, reflect.Uint32, reflect.Uint16, reflect.Uint8,
+			reflect.Int, reflect.Int64, reflect.Int32, reflect.Int16, reflect.Int8:
 			*v = v.Convert(t)
 		case reflect.Float32, reflect.Float64:
 			*v = v.Convert(t)
@@ -62,8 +61,8 @@ func convert(v *reflect.Value, t reflect.Type, stringEscape bool) bool {
 			return false
 		}
 	case
-		reflect.Uint, reflect.Uint64, reflect.Uint32, reflect.Uint16,
-		reflect.Int, reflect.Int64, reflect.Int32, reflect.Int16:
+		reflect.Uint, reflect.Uint64, reflect.Uint32, reflect.Uint16, reflect.Uint8,
+		reflect.Int, reflect.Int64, reflect.Int32, reflect.Int16, reflect.Int8:
 		switch v.Kind() {
 		case t.Kind():
 			return true
@@ -75,8 +74,8 @@ func convert(v *reflect.Value, t reflect.Type, stringEscape bool) bool {
 			*v = reflect.ValueOf(val).Convert(t)
 		case reflect.Float32, reflect.Float64:
 			*v = v.Convert(t)
-		case reflect.Uint, reflect.Uint64, reflect.Uint32, reflect.Uint16,
-			reflect.Int, reflect.Int64, reflect.Int32, reflect.Int16:
+		case reflect.Uint, reflect.Uint64, reflect.Uint32, reflect.Uint16, reflect.Uint8,
+			reflect.Int, reflect.Int64, reflect.Int32, reflect.Int16, reflect.Int8:
 			*v = v.Convert(t)
 		default:
 			return false
@@ -95,19 +94,21 @@ func convert(v *reflect.Value, t reflect.Type, stringEscape bool) bool {
 			return false
 		}
 	case reflect.String:
-		nv := fmt.Sprint(v.Interface())
-		if stringEscape {
-			nv = htmlReplacer.Replace(nv)
+		str := v.Interface()
+		if str == nil {
+			str = ""
+		} else if s, ok := str.(fmt.Stringer); ok {
+			str = s.String()
 		}
-		*v = reflect.ValueOf(nv)
+		*v = reflect.ValueOf(fmt.Sprint(str))
 	}
 	return true
 }
 
-func SetReflectValue(r reflect.Value, v reflect.Value, escape bool) bool {
+func SetReflectValue(r reflect.Value, v reflect.Value) bool {
 	defer try()
 	if v.IsValid() {
-		c := convert(&v, r.Type(), escape)
+		c := convert(&v, r.Type())
 		if c {
 			if r.Kind() == reflect.Pointer && v.Kind() != reflect.Pointer {
 				v = v.Addr()

@@ -6,8 +6,9 @@ import (
 )
 
 var (
-	fielderResgistry map[string]*Fielder
+	once             sync.Once
 	muFielder        sync.RWMutex
+	fielderResgistry map[string]*Fielder
 )
 
 func initRegistry() {

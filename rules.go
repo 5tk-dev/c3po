@@ -1,9 +1,9 @@
 package c3po
 
 import (
+	"fmt"
 	"reflect"
 	"strings"
-	"sync"
 )
 
 type Rule struct {
@@ -13,17 +13,22 @@ type Rule struct {
 	Validate func(rv reflect.Value, rule string) bool
 }
 
-var (
-	rules map[string]*Rule
-	once  sync.Once
-)
+var defaultRules = map[string]bool{
+	"":         true,
+	"required": true,
+}
 
-func initRules() {
+var (
 	rules = map[string]*Rule{
 		"required": {
 			Name:     "required",
 			Message:  "{field} is required",
 			Validate: req,
+		},
+		"escape": {
+			Name:     "escape",
+			Message:  "{field} do not be replaced",
+			Validate: escape,
 		},
 		"min": {
 			Name:     "min",
@@ -35,8 +40,18 @@ func initRules() {
 			Message:  "{field} requires a value <= {value}",
 			Validate: max,
 		},
+		"minlen": {
+			Name:     "minlen",
+			Message:  "{field} requires a length value >= {value}",
+			Validate: minLen,
+		},
+		"maxlen": {
+			Name:     "maxlen",
+			Message:  "{field} requires a length value <= {value}",
+			Validate: maxLen,
+		},
 	}
-}
+)
 
 // ex:
 //
@@ -48,12 +63,13 @@ func initRules() {
 //			Age int `c3po:"min=18"`
 //	 }
 func SetRule(field string, rule *Rule) {
-	once.Do(initRules)
 	rule.Name = strings.ToLower(field)
-	rules[field] = rule
+	if _, ok := defaultRules[rule.Name]; ok {
+		panic(fmt.Errorf("%q ia a invalid tag rule", rule.Name))
+	}
+	rules[rule.Name] = rule
 }
 
 func GetRule(rule string) *Rule {
-	once.Do(initRules)
 	return rules[rule]
 }
