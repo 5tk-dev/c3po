@@ -3,7 +3,7 @@ package test
 import (
 	"testing"
 
-	"github.com/5tkgarage/c3po"
+	"5tk.dev/c3po"
 )
 
 type TagOmit struct {
@@ -30,7 +30,7 @@ type TagName struct {
 func TestStructTag_name(t *testing.T) {
 	var s = &TagName{}
 	uid := "000-000"
-	sch := c3po.Validate(s, map[string]string{"uuid": uid})
+	sch := c3po.Validate(s, map[string]any{"uuid": uid})
 	if sch.HasErrors() {
 		t.Error(sch.Errors())
 	}

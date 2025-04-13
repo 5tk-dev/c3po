@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/5tkgarage/c3po"
+	"5tk.dev/c3po"
 )
 
 type BStructValue struct {

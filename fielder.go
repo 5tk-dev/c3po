@@ -237,13 +237,7 @@ func (f *Fielder) decodeStruct(v any) (sch reflect.Value, err any) {
 			}
 			if value == nil && !fielder.Nullable {
 				if fielder.Required {
-					errs = append(errs, ValidationError{
-						Rule: &Rule{
-							Name:    "required",
-							Message: "{field} is required",
-						},
-						Field: fielder.Name,
-					})
+					errs = append(errs, RetMissing(fielder))
 				}
 				fielder.execRules(schF)
 				continue
@@ -404,6 +398,12 @@ func (f *Fielder) ToMap() map[string]any {
 	} else if f.IsSlice {
 		fieldMap["fields"] = f.SliceType.ToMap()
 	}
+
+	mapRules := []map[string]any{}
+	for _, r := range f.Rules {
+		mapRules = append(mapRules, r.ToMap())
+	}
+	fieldMap["rules"] = mapRules
 
 	return fieldMap
 }

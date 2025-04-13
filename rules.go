@@ -6,11 +6,27 @@ import (
 	"strings"
 )
 
+type typer int
+
+const (
+	Setter typer = iota // before
+	Formatter
+)
+
 type Rule struct {
 	Name     string //
+	Typer    typer
 	Value    string //
 	Message  string // ex.: {field} require a value >= 18
 	Validate func(rv reflect.Value, rule string) bool
+}
+
+func (r *Rule) ToMap() map[string]any {
+	return map[string]any{
+		"name":         r.Name,
+		"value":        r.Value,
+		"errorMessage": r.Message,
+	}
 }
 
 var defaultRules = map[string]bool{
@@ -55,8 +71,8 @@ var (
 
 // ex:
 //
-//		c3po.SetRules("min",&c3po.Rule{Message:"min value: {value}"}) // '{value}' be replace by Rule.Value
-//		c3po.SetRules("max",&c3po.Rule{Message:"max value: {value}"}) // '{value}' be replace by Rule.Value
+//		c3po.SetRules("min",&c3po.Rule{Message:"min value: {value}"}) // '{value}' be replace by "Rule.Value"
+//		c3po.SetRules("max",&c3po.Rule{Message:"max value: {value}"}) // '{value}' be replace by "Rule.Value"
 //		c3po.SetRules("format",&c3po.Rule{Validate:func(value any) bool {...}})
 //
 //		type User struct {
@@ -70,6 +86,4 @@ func SetRule(field string, rule *Rule) {
 	rules[rule.Name] = rule
 }
 
-func GetRule(rule string) *Rule {
-	return rules[rule]
-}
+func GetRule(rule string) *Rule { return rules[rule] }

@@ -1,7 +1,6 @@
 package c3po
 
 import (
-	"errors"
 	"fmt"
 	"reflect"
 	"runtime"
@@ -21,21 +20,6 @@ func HtmlEscape(s string) string { return htmlReplacer.Replace(s) }
 // return true if err == nil, else false
 func try() bool {
 	return recover() == nil
-}
-
-func makeFielderRules(ftags map[string]string) map[string]*Rule {
-	rs := map[string]*Rule{}
-	for ruleName, rule := range rules {
-		if tagValue, ok := ftags[ruleName]; ok {
-			rs[ruleName] = &Rule{
-				Name:     ruleName,
-				Value:    tagValue,
-				Message:  rule.Message,
-				Validate: rule.Validate,
-			}
-		}
-	}
-	return rs
 }
 
 func parseTags(tag string) map[string]string {
@@ -58,18 +42,31 @@ func parseTags(tag string) map[string]string {
 }
 
 func RetMissing(f *Fielder) error {
-	s := fmt.Sprintf(`{"field":"%s", "type": "%s","message": "missing"}`, f.Name, f.Type.String())
-	return errors.New(s)
+	v := &ValidationError{
+		Field: f.Name,
+		Rule:  rules["required"],
+	}
+	return v
 }
 
 func RetInvalidType(f *Fielder) error {
-	s := fmt.Sprintf(`{"field":"%s", "type": "%s","message": "invalid type"}`, f.Name, f.Type.String())
-	return errors.New(s)
+	v := &ValidationError{
+		Field: f.Name,
+		Rule: &Rule{
+			Message: fmt.Sprintf("{field} require a type: %s", f.Type),
+		},
+	}
+	return v
 }
 
 func RetInvalidValue(f *Fielder) error {
-	s := fmt.Sprintf(`{"field":"%s", "type": "%s","message": "invalid value"}`, f.Name, f.Type.String())
-	return errors.New(s)
+	v := &ValidationError{
+		Field: f.Name,
+		Rule: &Rule{
+			Message: "{field} require a value",
+		},
+	}
+	return v
 }
 
 func GetFunctionName(i interface{}) string {
