@@ -1,4 +1,4 @@
-
+<meta name="go-import" content="5tk.dev/c3po git https://github.com/5tkgarage/c3po">
 # c3po
 
 **c3po** é uma biblioteca de validação de structs em Go inspirada no Pydantic, com foco em performance, flexibilidade e facilidade de uso. Ideal para validações robustas em APIs web, sistemas embarcados e mais.
