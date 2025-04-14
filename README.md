@@ -7,7 +7,7 @@
 ## Instalação
 
 ```bash
-go get github.com/5tkgarage/c3po
+go get 5th.dev/c3po
 ```
 
 ---
