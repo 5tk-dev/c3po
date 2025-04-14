@@ -7,7 +7,7 @@
 ## Instalação
 
 ```bash
-go get 5th.dev/c3po
+go get 5tk.dev/c3po
 ```
 
 ---
