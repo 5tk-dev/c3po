@@ -26,7 +26,7 @@ func TestFloatsWithFloats(t *testing.T) {
 				t.Error(sch.Errors())
 			}
 			if schT := reflect.ValueOf(sch.Value()).Kind(); schT != reflect.Float32 {
-				t.Errorf("got %q, want %q", schT, reflect.Float32)
+				t.Errorf("got %v, want %q", reflect.ValueOf(sch.Value()).Type(), reflect.Float32)
 			}
 		case "f64":
 			sch := fielder.Decode(123.123)
@@ -34,7 +34,7 @@ func TestFloatsWithFloats(t *testing.T) {
 				t.Error(sch.Errors())
 			}
 			if schT := reflect.ValueOf(sch.Value()).Kind(); schT != reflect.Float64 {
-				t.Errorf("got %q, want %q", schT, reflect.Float64)
+				t.Errorf("got %v, want %q", schT, reflect.Float64)
 			}
 		}
 	}
@@ -54,7 +54,7 @@ func TestFloatsWithInts(t *testing.T) {
 				t.Error(sch.Errors())
 			}
 			if schT := reflect.ValueOf(sch.Value()).Kind(); schT != reflect.Float32 {
-				t.Errorf("got %q, want %q", schT, reflect.Float32)
+				t.Errorf("got %v, want %q", schT, reflect.Float32)
 			}
 		case "f64":
 			sch := fielder.Decode(99999999)
@@ -62,7 +62,7 @@ func TestFloatsWithInts(t *testing.T) {
 				t.Error(sch.Errors())
 			}
 			if schT := reflect.ValueOf(sch.Value()).Kind(); schT != reflect.Float64 {
-				t.Errorf("got %q, want %q", schT, reflect.Float64)
+				t.Errorf("got %v, want %q", schT, reflect.Float64)
 			}
 		}
 	}
@@ -82,7 +82,7 @@ func TestFloatsWithStringInts(t *testing.T) {
 				t.Error(sch.Errors())
 			}
 			if schT := reflect.ValueOf(sch.Value()).Kind(); schT != reflect.Float32 {
-				t.Errorf("got %q, want %q", schT, reflect.Float32)
+				t.Errorf("got %v, want %q", schT, reflect.Float32)
 			}
 		case "f64":
 			sch := fielder.Decode("99999999")
@@ -90,7 +90,7 @@ func TestFloatsWithStringInts(t *testing.T) {
 				t.Error(sch.Errors())
 			}
 			if schT := reflect.ValueOf(sch.Value()).Kind(); schT != reflect.Float64 {
-				t.Errorf("got %q, want %q", schT, reflect.Float64)
+				t.Errorf("got %v, want %q", schT, reflect.Float64)
 			}
 		}
 	}
@@ -107,19 +107,19 @@ func TestFloatsWithStringValues(t *testing.T) {
 		case "f32":
 			sch := fielder.Decode("\t\t")
 			if !sch.HasErrors() {
-				t.Errorf("got %q, want %q", sch.Value(), "error")
+				t.Errorf("got %v, want %q", sch.Value(), "error")
 			}
 		case "f64":
 			sch := fielder.Decode("\r\n")
 			if !sch.HasErrors() {
-				t.Errorf("got %q, want %q", sch.Value(), "error")
+				t.Errorf("got %v, want %q", sch.Value(), "error")
 			}
 		}
 	}
 }
 
 // floats.Decode(false) -> Schema.hasError()
-func TestFloatsWithBooleans0(t *testing.T) {
+func TestFloatsWithBooleans(t *testing.T) {
 	fielders := map[string]*c3po.Fielder{
 		"f32": c3po.ParseSchema(f32),
 		"f64": c3po.ParseSchema(f64),
@@ -129,12 +129,12 @@ func TestFloatsWithBooleans0(t *testing.T) {
 		case "f32":
 			sch := fielder.Decode(false)
 			if !sch.HasErrors() {
-				t.Errorf("got %q, want %q", sch.Value(), "error")
+				t.Errorf("got %v, want %q", sch.Value(), "error")
 			}
 		case "f64":
 			sch := fielder.Decode(false)
 			if !sch.HasErrors() {
-				t.Errorf("got %q, want %q", sch.Value(), "error")
+				t.Errorf("got %v, want %q", sch.Value(), "error")
 			}
 		}
 	}
@@ -151,12 +151,12 @@ func TestFloatsWithBooleans1(t *testing.T) {
 		case "f32":
 			sch := fielder.Decode(true)
 			if !sch.HasErrors() {
-				t.Errorf("got %q, want %q", sch.Value(), "error")
+				t.Errorf("got %v, want %q", sch.Value(), "error")
 			}
 		case "f64":
 			sch := fielder.Decode(true)
 			if !sch.HasErrors() {
-				t.Errorf("got %q, want %q", sch.Value(), "error")
+				t.Errorf("got %v, want %q", sch.Value(), "error")
 			}
 		}
 	}
@@ -174,12 +174,12 @@ func TestFloatsWithStructs(t *testing.T) {
 		case "f32":
 			sch := fielder.Decode(s)
 			if !sch.HasErrors() {
-				t.Errorf("got %q, want %q", sch.Value(), "error")
+				t.Errorf("got %v, want %q", sch.Value(), "error")
 			}
 		case "f64":
 			sch := fielder.Decode(s)
 			if !sch.HasErrors() {
-				t.Errorf("got %q, want %q", sch.Value(), "error")
+				t.Errorf("got %v, want %q", sch.Value(), "error")
 			}
 		}
 	}
@@ -197,12 +197,12 @@ func TestFloatsWithMaps(t *testing.T) {
 		case "f32":
 			sch := fielder.Decode(m)
 			if !sch.HasErrors() {
-				t.Errorf("got %q, want %q", sch.Value(), "error")
+				t.Errorf("got %v, want %q", sch.Value(), "error")
 			}
 		case "f64":
 			sch := fielder.Decode(m)
 			if !sch.HasErrors() {
-				t.Errorf("got %q, want %q", sch.Value(), "error")
+				t.Errorf("got %v, want %q", sch.Value(), "error")
 			}
 		}
 	}
@@ -220,12 +220,12 @@ func TestFloatsWithFuncs(t *testing.T) {
 		case "f32":
 			sch := fielder.Decode(f)
 			if !sch.HasErrors() {
-				t.Errorf("got %q, want %q", sch.Value(), "error")
+				t.Errorf("got %v, want %q", sch.Value(), "error")
 			}
 		case "f64":
 			sch := fielder.Decode(f)
 			if !sch.HasErrors() {
-				t.Errorf("got %q, want %q", sch.Value(), "error")
+				t.Errorf("got %v, want %q", sch.Value(), "error")
 			}
 		}
 	}

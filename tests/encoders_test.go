@@ -6,12 +6,13 @@ import (
 	"5tk.dev/c3po"
 )
 
-func TestDecodeStruct(t *testing.T) {
+func TestEncodeStruct(t *testing.T) {
 	u := &UserTest{Name: "5tk", Age: 18}
 
 	r, err := c3po.Encode(u)
 	if err != nil {
 		t.Error(err)
+		return
 	}
 
 	m := r.(map[string]any)
@@ -24,7 +25,7 @@ func TestDecodeStruct(t *testing.T) {
 	}
 }
 
-func TestDecodeSlice(t *testing.T) {
+func TestEncodeSlice(t *testing.T) {
 	u := []*UserTest{
 		{Name: "5", Age: 18},
 		{Name: "5t", Age: 18},
@@ -40,10 +41,9 @@ func TestDecodeSlice(t *testing.T) {
 	r, err := c3po.Encode(u)
 	if err != nil {
 		t.Error(err)
+		return
 	}
-
 	m := r.([]any)
-
 	if len(m) != 9 {
 		t.Errorf("m got %v, want: []map[string]any{}9x", m)
 	}

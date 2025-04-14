@@ -76,11 +76,14 @@ type TagNullable struct {
 
 // tag "nullable"
 func TestStructTag_nullable(t *testing.T) {
+
 	var s = &TagNullable{}
 	sch := c3po.Validate(s, map[string]any{})
 	if sch.HasErrors() {
 		t.Error(sch.Errors())
+		return
 	}
+
 	v := sch.Value().(*TagNullable)
 	if v.Field != nil {
 		t.Errorf("TagNullable.Field: got %v, want \"nil\"", v.Field)
@@ -135,21 +138,30 @@ type TagMinMax struct {
 
 func TestTagStructTag_minMax(t *testing.T) {
 	s := &TagMinMax{}
-	sch0 := c3po.Validate(s, map[string]string{})
-	sch1 := c3po.Validate(s, map[string]string{"num": "1"})
-	sch2 := c3po.Validate(s, map[string]string{"num": "2"})
-	sch3 := c3po.Validate(s, map[string]string{"num": "3"})
 
+	sch := c3po.Validate(s, map[string]string{})
+	sch0 := c3po.Validate(s, map[string]int{"num": 0})
+	sch1 := c3po.Validate(s, map[string]int{"num": 1})
+	sch2 := c3po.Validate(s, map[string]int{"num": 2})
+	sch3 := c3po.Validate(s, map[string]int{"num": 3})
+
+	if !sch.HasErrors() {
+		t.Errorf("TagMinMax.Field: got %v, want min error", sch.Value().(*TagMinMax).Num)
+		return
+	}
 	if !sch0.HasErrors() {
 		t.Errorf("TagMinMax.Field: got %v, want min error", sch0.Value().(*TagMinMax).Num)
+		return
 	}
 	if sch1.HasErrors() {
 		t.Error(sch1.Errors())
+		return
 	}
 	if sch2.HasErrors() {
 		t.Error(sch2.Errors())
+		return
 	}
 	if !sch3.HasErrors() {
-		t.Errorf("TagMinMax.Field: got %v, want min error", sch1.Value().(*TagMinMax).Num)
+		t.Errorf("TagMinMax.Field: got %v, want min error", sch3.Value().(*TagMinMax).Num)
 	}
 }

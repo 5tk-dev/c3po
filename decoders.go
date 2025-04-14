@@ -10,8 +10,7 @@ import (
 
 // use 'validate' in tags
 func Validate(sch, data any) Schema {
-	f := ParseSchemaWithTag("validate", sch)
-	return f.Decode(data)
+	return ParseSchemaWithTag("validate", sch).Decode(data)
 }
 
 // return a []map, map or a simple value. Depende doq vc passou como argumento

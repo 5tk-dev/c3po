@@ -6,19 +6,12 @@ import (
 	"strings"
 )
 
-type typer int
-
-const (
-	Setter typer = iota // before
-	Formatter
-)
-
 type Rule struct {
-	Name     string //
-	Typer    typer
-	Value    string //
-	Message  string // ex.: {field} require a value >= 18
-	Validate func(rv reflect.Value, rule string) bool
+	Name           string //
+	Value          string //
+	Message        string // ex.: {field} require a value >= 18
+	Validate       func(rv reflect.Value, rule string) bool
+	BeforeSetValue bool // exec after set value
 }
 
 func (r *Rule) ToMap() map[string]any {

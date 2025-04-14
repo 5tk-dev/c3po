@@ -11,6 +11,7 @@ func TestSliceInt(t *testing.T) {
 	sch := c3po.Validate(s, []any{1, "2", 3, 4, "5", "6.5"})
 	if sch.HasErrors() {
 		t.Error(sch.Errors())
+		return
 	}
 	if len(sch.Value().([]int)) != 6 {
 		t.Errorf("TestMapString got %v, want %v", sch.Value(), []int{1, 2, 3, 4, 5, 6})
@@ -18,7 +19,7 @@ func TestSliceInt(t *testing.T) {
 }
 
 func TestSliceStruct(t *testing.T) {
-	var s []*UserTest
+	var s []UserTest
 	var data = []map[string]any{
 		{"name": "etho", "age": 18},
 		{"name": "etho", "age": 18},
@@ -28,8 +29,9 @@ func TestSliceStruct(t *testing.T) {
 	sch := c3po.Validate(s, data)
 	if sch.HasErrors() {
 		t.Error(sch.Errors())
+		return
 	}
-	if len(sch.Value().([]*UserTest)) != 4 {
+	if len(sch.Value().([]UserTest)) != 4 {
 		t.Errorf("TestMapString got %v, want %v", sch.Value(), []*UserTest{})
 	}
 }

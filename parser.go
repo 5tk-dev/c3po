@@ -45,50 +45,33 @@ func parseSchema(schema any, tagKey string, tags map[string]string) *Fielder {
 	if _, ok := tags["-"]; ok {
 		return nil
 	}
+	var (
+		f  = &Fielder{Schema: schema}
+		rv = reflect.ValueOf(schema)
+	)
 
-	var rt reflect.Type
-	rv := reflect.ValueOf(schema)
-	f := &Fielder{}
 	f.parseHeaders(tags)
 	f.parseRules()
 
-	if schema != nil {
-		if rv.Kind() == reflect.Ptr {
-			f.IsPointer = true
-		}
-
-		rt = rv.Type()
-		rv = GetReflectElem(rv)
-		if rt.Kind() == reflect.Ptr {
-			rt = rt.Elem()
-		}
-
-		f.Type = rt.Kind()
-		f.Children = map[string]*Fielder{}
-	} else {
-		f.Type = reflect.Interface
+	rt := rv.Type()
+	if rv.Kind() == reflect.Pointer {
+		f.IsPointer = true
+		rv = rv.Elem()
+		rt = rt.Elem()
 	}
-	f.Schema = schema
+
+	if schema == nil {
+		f.Type = reflect.Interface
+	} else {
+		f.Type = rv.Kind()
+		f.Children = map[string]*Fielder{}
+	}
 
 	f.RealName = tags["realName"]
 	if f.RealName == "" && f.Type != reflect.Interface {
 		f.RealName = rt.Name()
 	}
 
-	if rv.Kind() == reflect.Pointer {
-		f.IsPointer = true
-		rTmp := rv.Elem()
-		if rTmp.Kind() == reflect.Pointer {
-			rv = rTmp
-			rt = rt.Elem()
-		}
-	}
-	if !rv.IsValid() && f.Type != reflect.Interface {
-		rv = reflect.New(rt).Elem()
-		if rv.Kind() == reflect.Ptr {
-			rv = rv.Elem()
-		}
-	}
 	switch f.Type {
 	case reflect.Struct:
 		f.IsStruct = true
@@ -111,11 +94,11 @@ func parseSchema(schema any, tagKey string, tags map[string]string) *Fielder {
 					cname = strings.ToLower(ft.Name)
 					childTags["name"] = cname
 				}
-				var finter any
+				var fi any
 				if fv.Kind() != reflect.Interface {
-					finter = fv.Interface()
+					fi = fv.Interface()
 				}
-				child := parseSchema(finter, tagKey, childTags)
+				child := parseSchema(fi, tagKey, childTags)
 				f.FieldsByIndex[i] = cname
 				if child != nil {
 					child.SuperIndex = &i
@@ -127,10 +110,10 @@ func parseSchema(schema any, tagKey string, tags map[string]string) *Fielder {
 			}
 		}
 	case reflect.Slice, reflect.Array:
-		f.Walk = true
 		f.Type = rt.Kind()
 		f.IsSlice = true
-		sliceObjet := reflect.New(rv.Type().Elem()).Elem()
+		rvt := rv.Type().Elem()
+		sliceObjet := reflect.New(rvt).Elem()
 		f.SliceType = parseSchema(sliceObjet.Interface(), tagKey, map[string]string{"realName": ""})
 	case reflect.Map:
 		f.IsMAP = true

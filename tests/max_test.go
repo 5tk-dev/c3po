@@ -13,9 +13,9 @@ type TagMaxInt8 struct {
 func TestMaxInt8_ok(t *testing.T) {
 	m := &TagMaxInt8{}
 	sch := c3po.Validate(m, map[string]any{"value": "-1"})
-
 	if sch.HasErrors() {
 		t.Error(sch.Errors())
+		return
 	}
 
 	if v, ok := sch.Value().(*TagMaxInt8); !ok {

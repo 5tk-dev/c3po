@@ -270,7 +270,7 @@ func maxLen(rv reflect.Value, ruleValue string) bool {
 
 func escape(rv reflect.Value, _ string) bool {
 	if str, ok := rv.Interface().(string); ok {
-		rv.Set(reflectOf(HtmlEscape(str)))
+		rv.Set(reflect.ValueOf(HtmlEscape(str)))
 	}
 	return true
 }
