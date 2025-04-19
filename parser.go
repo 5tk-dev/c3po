@@ -1,7 +1,6 @@
 package c3po
 
 import (
-	"log"
 	"reflect"
 	"strings"
 )
@@ -49,6 +48,7 @@ func parseSchema(schema any, tagKey string, tags map[string]string) *Fielder {
 		f  = &Fielder{Schema: schema}
 		rv = reflect.ValueOf(schema)
 	)
+	f.RealName = tags["realName"]
 
 	f.parseHeaders(tags)
 	f.parseRules()
@@ -60,16 +60,15 @@ func parseSchema(schema any, tagKey string, tags map[string]string) *Fielder {
 		rt = rt.Elem()
 	}
 
+	if f.RealName == "" && f.Type != reflect.Interface {
+		f.RealName = rt.Name()
+	}
+
 	if schema == nil {
 		f.Type = reflect.Interface
 	} else {
 		f.Type = rv.Kind()
 		f.Children = map[string]*Fielder{}
-	}
-
-	f.RealName = tags["realName"]
-	if f.RealName == "" && f.Type != reflect.Interface {
-		f.RealName = rt.Name()
 	}
 
 	switch f.Type {
@@ -80,24 +79,25 @@ func parseSchema(schema any, tagKey string, tags map[string]string) *Fielder {
 			fv := rv.Field(i)
 			if fv.CanInterface() {
 				ft := rt.Field(i)
-
 				childTags := parseTags(ft.Tag.Get(tagKey))
 				if _, ok := childTags["-"]; ok {
 					continue
 				}
+
 				cname := ""
 				childTags["realName"] = ft.Name
 				if v, ok := childTags["name"]; ok && v != "" {
 					cname = v
-					childTags["name"] = v
 				} else {
-					cname = strings.ToLower(ft.Name)
-					childTags["name"] = cname
+					cname = ft.Name
 				}
+				childTags["name"] = cname
+
 				var fi any
 				if fv.Kind() != reflect.Interface {
 					fi = fv.Interface()
 				}
+
 				child := parseSchema(fi, tagKey, childTags)
 				f.FieldsByIndex[i] = cname
 				if child != nil {
@@ -124,17 +124,7 @@ func parseSchema(schema any, tagKey string, tags map[string]string) *Fielder {
 	}
 	if rv.IsValid() {
 		if rv.CanInterface() && !rv.IsZero() {
-			def, err := encode(rv.Interface())
-			if err != nil {
-				n := f.Name
-				if n == "" {
-					n = f.RealName
-				}
-				log.Printf("warn: Default Value is invalid into fielder: '%s'\n", n)
-				log.Println(err)
-			} else {
-				f.Default = def
-			}
+			f.Default = schema
 		}
 	}
 	return f

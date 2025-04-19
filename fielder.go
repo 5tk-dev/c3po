@@ -1,9 +1,12 @@
 package c3po
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"reflect"
+
+	"5tk.dev/c3po/encoder"
 )
 
 var (
@@ -197,18 +200,21 @@ func (f *Fielder) decodeMap(rv reflect.Value) (sch reflect.Value, err any) {
 func (f *Fielder) decodeStruct(v any) (reflect.Value, any) {
 	errs := []any{}
 	data, ok := v.(map[string]any)
-
 	if !ok {
-		_data, err := Encode(v)
-		if err != nil {
-			return reflect.Value{}, err
-		}
+		_data := encoder.Encode(v)
+
 		data, ok = _data.(map[string]any)
 		if !ok {
-			if f.SkipError {
+			if d, ok := _data.(map[any]any); ok {
+				data = map[string]any{}
+				for k, v := range d {
+					data[fmt.Sprint(k)] = v
+				}
+			} else if f.SkipError {
 				return f.New(), nil
+			} else {
+				return reflect.Value{}, RetInvalidType(f)
 			}
-			return reflect.Value{}, RetInvalidType(f)
 		}
 	}
 
@@ -230,11 +236,13 @@ func (f *Fielder) decodeStruct(v any) (reflect.Value, any) {
 		if fielder.Recurcive {
 			value = data
 		} else {
-			if value, ok = data[fielder.Name]; !ok {
+			fn := fName
+			if value, ok = data[fn]; !ok {
 				if fielder.Default != nil {
 					value = fielder.Default
 				}
 			}
+
 			if value == nil && !fielder.Nullable {
 				if fielder.Required {
 					errs = append(errs, RetMissing(fielder))
@@ -275,13 +283,13 @@ func (f *Fielder) decodeStruct(v any) (reflect.Value, any) {
 			continue
 		}
 	}
-
 	var err any
 	if len(errs) == 1 {
 		err = errs[0]
 	} else if len(errs) > 0 {
 		err = errs
 	}
+
 	return sch, err
 }
 
@@ -336,15 +344,15 @@ func (f *Fielder) decodeSchema(v any) (reflect.Value, any) {
 }
 
 func (f *Fielder) Decode(data any) Schema {
-	// if d, ok := data.(string); ok {
-	// 	if (f.Type == reflect.Map) || (f.Type == reflect.Struct) || (f.Type == reflect.Slice) {
-	// 		var m any
-	// 		err := json.Unmarshal([]byte(d), &m)
-	// 		if err == nil {
-	// 			data = m
-	// 		}
-	// 	}
-	// }
+	if d, ok := data.(string); ok {
+		if (f.Type == reflect.Map) || (f.Type == reflect.Struct) || (f.Type == reflect.Slice) {
+			var m any
+			err := json.Unmarshal([]byte(d), &m)
+			if err == nil {
+				data = m
+			}
+		}
+	}
 	sch, err := f.decodeSchema(data)
 	s := &schema{}
 	if err != nil {
@@ -416,5 +424,5 @@ func (f *Fielder) ToMap() map[string]any {
 }
 
 func (f *Fielder) String() string {
-	return EncodeToStringIndent("  ", f.ToMap())
+	return encoder.EncodeToStringIndent("  ", f.ToMap())
 }

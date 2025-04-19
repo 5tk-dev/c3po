@@ -3,17 +3,13 @@ package test
 import (
 	"testing"
 
-	"5tk.dev/c3po"
+	"5tk.dev/c3po/encoder"
 )
 
 func TestEncodeStruct(t *testing.T) {
 	u := &UserTest{Name: "5tk", Age: 18}
 
-	r, err := c3po.Encode(u)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	r := encoder.Encode(u)
 
 	m := r.(map[string]any)
 
@@ -38,11 +34,7 @@ func TestEncodeSlice(t *testing.T) {
 		{Name: "5tkGarage", Age: 18},
 	}
 
-	r, err := c3po.Encode(u)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	r := encoder.Encode(u)
 	m := r.([]any)
 	if len(m) != 9 {
 		t.Errorf("m got %v, want: []map[string]any{}9x", m)
