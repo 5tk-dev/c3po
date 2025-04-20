@@ -89,7 +89,7 @@ func parseSchema(schema any, tagKey string, tags map[string]string) *Fielder {
 				if v, ok := childTags["name"]; ok && v != "" {
 					cname = v
 				} else {
-					cname = ft.Name
+					cname = strings.ToLower(ft.Name)
 				}
 				childTags["name"] = cname
 
