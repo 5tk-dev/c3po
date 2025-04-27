@@ -1,96 +1,71 @@
-# c3po
+# C3PO  
+**GoLang data validator – simples, flexível e extensível.**
 
-**c3po** é uma biblioteca de validação de structs em Go inspirada no Pydantic, com foco em performance, flexibilidade e facilidade de uso. Ideal para validações robustas em APIs web, sistemas embarcados e mais.
+C3PO é um validador de dados rápido e minimalista para Go.  
+Ele é pensado para ser leve, intuitivo e fácil de extender — sem refletividade pesada ou configurações complexas.
 
----
+## Features ✨
+- 🔥 Validação por tags (`required`, `min`, `max`,`minlen`)
+- ⚡ Sem mágica: fácil de entender e debuggar
+- 🛠️ Extensível: adicione suas próprias validações
+- 🏎️ Alto desempenho: ideal para aplicações críticas
 
 ## Instalação
-
 ```bash
 go get 5tk.dev/c3po
 ```
 
----
-
-## Exemplo Básico
-
+## Exemplo rápido
 ```go
+package main
+
+import (
+    "fmt"
+    "5tk.dev/c3po"
+)
+
 type User struct {
-    Name string `c3po:"required"`
-    Age  int    `c3po:"min=18"`
+    Name string `validate:"required"`
+    Age  int    `validate:"min=18"`
 }
 
-data := &User{Name: "Luke", Age: 17}
-schema := c3po.ParseSchema(data)
-res := schema.Decode(data)
-
-if res.HasError() {
-    fmt.Println(res.Errors())
+func main() {
+    user := &User{}
+    sch := c3po.Validate(user,map[string]any{"name": "cleitu", "age": "15"})
+    if sch.HasErrors() {
+        panic(sch.Errors())
+    }
+    u := sch.Value().(*User)
+    fmt.Println(u) 
 }
 ```
 
----
+## Validações suportadas
+| Tag       | Descrição                  |
+|-----------|----------------------------|
+| `required`| Campo obrigatório          |
+| `min`     | Valor mínimo (número)      |
+| `max`     | Valor máximo (número)      |
+| `minlen`  | Valor máximo (tamanho)     |
+| `maxlen`  | Valor máximo (tamanho)     |
+| `escape`  | Html Escape     |
 
-## Tags Suportadas
-
-| Tag        | Descrição                                  |
-|------------|--------------------------------------------|
-| `required` | Campo obrigatório                          |
-| `min`      | Valor mínimo (para números, strings, etc.) |
-| `max`      | Valor máximo                               |
-| `in`       | Lista de valores aceitos                   |
-
----
-
-## Tags Personalizadas
-
-Você pode definir suas próprias tags com:
-
+## Extensões e validações customizadas
+Crie novas tags facilmente:
 ```go
-c3po.ParseSchemaWithTag("chat", struct)
+c3po.Register("now", func(field reflect.Value, param string) error {
+    field.Set(reflect.ValueOf(time.Now()))
+    return nil
+})
 ```
 
-Isso permite utilizar a lib com frameworks como Fiber, Gin, Echo e outros, mantendo liberdade total nas tags de validação.
+## Roadmap 🚀
+- [x] Sistema de validação básico (`required`, `min`, `max`)
+- [ ] Middleware de validação para `http.Request`
+- [ ] Diretório de exemplos
+- [ ] Documentação completa
+- [ ] Benchmarks
 
----
-
-## Retorno de Erros
-
-`Decode()` retorna um struct com:
-
-- `ValidData()`: dados validados (com defaults aplicados)
-- `Errors()`: mapa com os erros de validação encontrados
-
----
-
-## Exemplo com Valor Padrão
-
-```go
-type Food struct {
-    Name string `c3po:"required=false"`
-}
-
-schema := c3po.ParseSchema(&Food{Name: "fries"})
-res := schema.Decode(map[string]any{}) // Name será "fries"
-```
-
----
-
-## Ideias Futuras
-
-- Suporte a `enum` e validações encadeadas
-- Validações condicionais entre campos
-- Integração com serialização JSON nativa
-- Geração automática de documentação a partir dos schemas
-
----
-
-## Contribuição
-
-Contribuições são bem-vindas! Abra uma issue, envie um PR ou mande uma ideia maluca — a casa é sua.
-
----
-
-## Licença
-
-MIT — use, modifique, compartilhe.
+## Contribuindo
+Pull requests são bem-vindos!  
+Se encontrar algum bug ou tiver ideias de melhoria, abra uma [issue](https://github.com/5tk-dev/c3po/issues).
