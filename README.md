@@ -48,15 +48,19 @@ func main() {
 | `max`     | Valor máximo (número)      |
 | `minlen`  | Valor máximo (tamanho)     |
 | `maxlen`  | Valor máximo (tamanho)     |
-| `escape`  | Html Escape     |
+| `escape`  | Html Escape                |
 
 ## Extensões e validações customizadas
 Crie novas tags facilmente:
 ```go
-c3po.Register("now", func(field reflect.Value, param string) error {
+c3po.SetRule("now", func(field reflect.Value, param string) error {
     field.Set(reflect.ValueOf(time.Now()))
     return nil
 })
+
+type Foo struct{
+    CreatedAt time.Time `c3po:"now"`
+}
 ```
 
 ## Roadmap 🚀
