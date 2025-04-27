@@ -47,28 +47,33 @@ func parseSchema(schema any, tagKey string, tags map[string]string) *Fielder {
 	var (
 		f  = &Fielder{Schema: schema}
 		rv = reflect.ValueOf(schema)
+		rt reflect.Type
 	)
 	f.RealName = tags["realName"]
 
 	f.parseHeaders(tags)
 	f.parseRules()
 
-	rt := rv.Type()
+	if schema != nil {
+		rt = rv.Type()
+	} else {
+		rt = reflect.TypeOf(nil)
+		f.Type = reflect.Interface
+	}
+
 	if rv.Kind() == reflect.Pointer {
 		f.IsPointer = true
 		rv = rv.Elem()
 		rt = rt.Elem()
 	}
 
-	if f.RealName == "" && f.Type != reflect.Interface {
-		f.RealName = rt.Name()
+	if schema != nil {
+		f.Type = rv.Kind()
+		f.Children = make(map[string]*Fielder)
 	}
 
-	if schema == nil {
-		f.Type = reflect.Interface
-	} else {
-		f.Type = rv.Kind()
-		f.Children = map[string]*Fielder{}
+	if f.RealName == "" && f.Type != reflect.Interface {
+		f.RealName = rt.Name()
 	}
 
 	switch f.Type {
@@ -110,23 +115,47 @@ func parseSchema(schema any, tagKey string, tags map[string]string) *Fielder {
 			}
 		}
 	case reflect.Slice, reflect.Array:
+		objIsPrt := false
 		f.Type = rt.Kind()
 		f.IsSlice = true
 		rvt := rv.Type().Elem()
+		if rvt.Kind() == reflect.Pointer {
+			objIsPrt = true
+			rvt = rvt.Elem()
+		}
 		sliceObjet := reflect.New(rvt).Elem()
 		f.SliceType = parseSchema(sliceObjet.Interface(), tagKey, map[string]string{"realName": ""})
+		f.SliceType.IsPointer = objIsPrt
 	case reflect.Map:
 		f.IsMAP = true
+
+		keyIsPtr := false
+		valIsPtr := false
+
 		mapKey := reflect.New(rt.Key()).Elem()
+		if mapKey.Kind() == reflect.Pointer {
+			keyIsPtr = true
+			mapKey = mapKey.Elem()
+		}
 		mapValue := reflect.New(rt.Elem()).Elem()
+
+		if mapValue.Kind() == reflect.Pointer {
+			valIsPtr = true
+			mapValue = mapValue.Elem()
+		}
+
 		f.MapKeyType = parseSchema(mapKey.Interface(), tagKey, map[string]string{"realName": ""})
 		f.MapValueType = parseSchema(mapValue.Interface(), tagKey, map[string]string{"realName": ""})
+
+		f.MapKeyType.IsPointer = keyIsPtr
+		f.MapValueType.IsPointer = valIsPtr
 	}
 	if rv.IsValid() {
 		if rv.CanInterface() && !rv.IsZero() {
 			f.Default = schema
 		}
 	}
+
 	return f
 }
 

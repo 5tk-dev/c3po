@@ -113,14 +113,17 @@ func (f *Fielder) decodeSlice(rv reflect.Value) (sch reflect.Value, err any) {
 	sliceOf := reflect.TypeOf(f.Schema)
 	lenSlice := rv.Len()
 
-	sch = reflect.MakeSlice(sliceOf, lenSlice, rv.Cap())
+	if f.IsPointer {
+		sch = reflect.MakeSlice(sliceOf.Elem(), lenSlice, rv.Cap())
+	} else {
+		sch = reflect.MakeSlice(sliceOf, lenSlice, rv.Cap())
+	}
 
 	for i := range lenSlice {
 		var (
-			is  = rv.Index(i)
-			sf  = f.SliceType
-			err any
-
+			is       = rv.Index(i)
+			sf       = f.SliceType
+			err      any
 			sliceSch reflect.Value
 		)
 
@@ -159,6 +162,7 @@ func (f *Fielder) decodeSlice(rv reflect.Value) (sch reflect.Value, err any) {
 	} else if len(errs) > 0 {
 		err = errs
 	}
+
 	return
 }
 
